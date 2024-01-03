@@ -3,6 +3,7 @@ const app = express();
 const dotenv = require("dotenv").config()
 const authRoute = require("./routes/authRoute")
 const mongoose = require("mongoose");
+
 //Parsing middleware
 app.use(express.json());
 
