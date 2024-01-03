@@ -3,6 +3,7 @@ const app = express();
 const dotenv = require("dotenv").config()
 const authRoute = require("./routes/authRoute")
 const noteRoute = require("./routes/noteRoute")
+const noteRoute = require("./routes/searchRoute")
 const mongoose = require("mongoose");
 
 //Parsing middleware
@@ -11,6 +12,7 @@ app.use(express.json());
 //Routes
 app.use('/api/auth', authRoute);
 app.use('/api', noteRoute)
+app.use('/api', searchRoute)
 
 //Error handling middleware
 app.use((err, req, res, next) => {
