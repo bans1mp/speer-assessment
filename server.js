@@ -5,6 +5,15 @@ const authRoute = require("./routes/authRoute")
 const noteRoute = require("./routes/noteRoute")
 const noteRoute = require("./routes/searchRoute")
 const mongoose = require("mongoose");
+const rateLimit = require("express-rate-limit")
+
+const limiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 200,
+});
+
+app.use(limiter);
+
 
 //Parsing middleware
 app.use(express.json());
