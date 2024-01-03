@@ -12,6 +12,9 @@ const noteSchema = new mongoose.Schema({
     owner: {
         type: String,
         required: true
+    },
+    sharedWith: {
+        type: [String]
     }
 }, { timestamps: true });
 
