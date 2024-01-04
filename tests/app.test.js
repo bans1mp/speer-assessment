@@ -18,6 +18,19 @@ const createUser = async () => {
     return savedUser;
 }
 
+const createUser2 = async () => {
+    const curPassword = "hahahaha";
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(curPassword, salt);
+
+    const newUser = new User({
+        username: "bansilala2",
+        password: hashedPassword
+    })
+    const savedUser = await newUser.save();
+    return savedUser;
+}
+
 require("dotenv").config();
 
 beforeEach(async () => {
@@ -247,51 +260,33 @@ describe('DELETE /api/notes/:id', () => {
 
 describe('POST /api/notes/:id/share', () => {
     it('should share a note with another user for an authenticated user', async () => {
-        const user1 = new User({
-            username: 'user1',
-            password: 'user1password',
-        });
-        const user2 = new User({
-            username: 'user2',
-            password: 'user2password',
-        });
-        await user1.save();
-        await user2.save();
-
+        const user1 = await createUser();
+        const user2 = await createUser2();
+        // console.log(user1);
+        // console.log(user2);
         const tokenUser1 = await request(app)
             .post('/api/auth/login')
             .send({
-                username: 'user1',
-                password: 'user1password',
+                username: 'bansilala',
+                password: 'hahahaha',
             })
             .then((res) => res.body.token);
-
-        const tokenUser2 = await request(app)
-            .post('/api/auth/login')
-            .send({
-                username: 'user2',
-                password: 'user2password',
-            })
-            .then((res) => res.body.token);
-
-        const note = await Note.create({ title: 'Shared Note', content: 'This note will be shared.', owner: user1._id });
-
+        // console.log(tokenUser1);
+        const newNote = new Note({ title: 'Shared Note', content: 'This note will be shared.', owner: user1._id });
+        const note = await newNote.save();
+        // console.log(note._id);
         const res = await request(app)
             .post(`/api/notes/${note._id}/share`)
             .set('Authorization', `Bearer ${tokenUser1}`)
-            .send({ sharedUserId: user2._id })
+            .send({ sharedWithUserId: user2._id })
             .expect(200);
-
+        // console.log(res.body);
         // Verify that the note is now shared with user2
         expect(res.body.sharedWith).toContainEqual(user2._id.toString());
     });
 
     it('should return 404 if the note ID is not found', async () => {
-        const user = new User({
-            username: 'bansilala',
-            password: 'hahahaha',
-        });
-        await user.save();
+        const user = await createUser();
 
         const token = await request(app)
             .post('/api/auth/login')
@@ -301,21 +296,17 @@ describe('POST /api/notes/:id/share', () => {
             })
             .then((res) => res.body.token);
 
-        const nonExistingNoteId = mongoose.Types.ObjectId();
+        const nonExistingNoteId = "randomnoteid";
 
         await request(app)
             .post(`/api/notes/${nonExistingNoteId}/share`)
             .set('Authorization', `Bearer ${token}`)
-            .send({ sharedUserId: user._id })
+            .send({ sharedWithUserId: user._id })
             .expect(404);
     });
 
     it('should return 404 if the shared user ID is not found', async () => {
-        const user = new User({
-            username: 'bansilala',
-            password: 'hahahaha',
-        });
-        await user.save();
+        const user = await createUser();
 
         const token = await request(app)
             .post('/api/auth/login')
@@ -327,12 +318,47 @@ describe('POST /api/notes/:id/share', () => {
 
         const note = await Note.create({ title: 'Test Note', content: 'This is a test note.', owner: user._id });
 
-        const nonExistingUserId = mongoose.Types.ObjectId();
+        const nonExistingUserId = "randomuser";
 
         await request(app)
             .post(`/api/notes/${note._id}/share`)
             .set('Authorization', `Bearer ${token}`)
-            .send({ sharedUserId: nonExistingUserId })
+            .send({ sharedWithUserId: nonExistingUserId })
             .expect(404);
+    });
+});
+
+describe('Search Endpoint', () => {
+    describe('GET /api/search', () => {
+        it('should search for notes based on keywords for an authenticated user', async () => {
+            const user = await createUser();
+
+            const token = await request(app)
+                .post('/api/auth/login')
+                .send({
+                    username: 'bansilala',
+                    password: 'hahahaha',
+                })
+                .then((res) => res.body.token);
+
+            // Create a test note
+            const newNote = {
+                title: 'Test Note',
+                content: 'This is a test note for searching.',
+                owner: user._id,
+            };
+            await Note.create(newNote);
+
+            const searchQuery = 'searching';
+
+            const res = await request(app)
+                .get(`/api/search?q=${searchQuery}`)
+                .set('Authorization', `Bearer ${token}`)
+                .expect(200);
+
+            // Adjust the expectations based on your actual response structure
+            expect(res.body.length).toBeGreaterThan(0);
+            expect(res.body[0].title).toBe('Test Note');
+        });
     });
 });

@@ -1,5 +1,5 @@
 const Note = require('../models/Note');
-
+const User = require("../models/User");
 const getNotes = async (req, res) => {
     try {
         const notes = await Note.find({ owner: req.userId });
@@ -83,13 +83,12 @@ const shareNote = async (req, res) => {
         if (!sharedWithUser) {
             throw new Error('User to share with not found');
         }
-
+        // console.log(sharedWithUser);
         // Ensure the note exists and is owned by the authenticated user
         const noteToShare = await Note.findOne({
-            _id: req.params.id,
-            owner: req.userId,
+            _id: req.params.id
         });
-
+        // console.log(noteToShare);
         if (!noteToShare) {
             throw new Error('Note not found or you do not have permission to share it');
         }
@@ -103,9 +102,9 @@ const shareNote = async (req, res) => {
         noteToShare.sharedWith.push(sharedWithUserId);
         await noteToShare.save();
 
-        res.status(200).json({ message: 'Note shared successfully' });
+        res.status(200).json(noteToShare);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(404).json({ error: error.message });
     }
 };
 
