@@ -9,9 +9,9 @@ router.use(authMiddleware)
 router.get('/notes', getNotes);
 router.get('/notes/:id', getNote);
 router.post('/notes', postNote);
-router.put('/posts/:id', updateNote);
-router.delete('/posts/:id', deleteNote);
-router.post('/posts/:id/share', shareNote);
+router.put('/notes/:id', updateNote);
+router.delete('/notes/:id', deleteNote);
+router.post('/notes/:id/share', shareNote);
 
 
 module.exports = router;
