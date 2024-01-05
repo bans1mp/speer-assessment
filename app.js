@@ -6,6 +6,7 @@ const noteRoute = require("./routes/noteRoute")
 const searchRoute = require("./routes/searchRoute")
 const rateLimit = require("express-rate-limit")
 
+//Rate limiter 
 const limiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     max: 200,

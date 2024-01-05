@@ -1,5 +1,6 @@
 const Note = require("../models/Note");
 
+//Searching note
 const searchNote = async (req, res) => {
     try {
         const query = req.query.q;

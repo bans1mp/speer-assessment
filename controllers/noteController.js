@@ -1,5 +1,7 @@
 const Note = require('../models/Note');
 const User = require("../models/User");
+
+//Getting all notes
 const getNotes = async (req, res) => {
     try {
         const notes = await Note.find({ owner: req.userId });
@@ -9,6 +11,7 @@ const getNotes = async (req, res) => {
     }
 }
 
+//Getting note by ID
 const getNote = async (req, res) => {
     try {
         const note = await Note.findOne({
@@ -19,10 +22,11 @@ const getNote = async (req, res) => {
         res.status(200).json(note);
         return;
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(404).json({ error: error.message });
     }
 }
 
+//Posting note
 const postNote = async (req, res) => {
     try {
         const { title, content } = req.body;
@@ -38,6 +42,7 @@ const postNote = async (req, res) => {
     }
 }
 
+//Updating a note
 const updateNote = async (req, res) => {
     try {
         const { title, content } = req.body;
@@ -57,6 +62,7 @@ const updateNote = async (req, res) => {
     }
 }
 
+//Deleting a note
 const deleteNote = async (req, res) => {
     try {
         const deletedNote = await Note.findOneAndDelete({
@@ -74,31 +80,32 @@ const deleteNote = async (req, res) => {
     }
 }
 
+//Sharing a note
 const shareNote = async (req, res) => {
     try {
         const { sharedWithUserId } = req.body;
 
-        // Ensure the user to share with exists
         const sharedWithUser = await User.findById(sharedWithUserId);
         if (!sharedWithUser) {
             throw new Error('User to share with not found');
         }
-        // console.log(sharedWithUser);
-        // Ensure the note exists and is owned by the authenticated user
+
         const noteToShare = await Note.findOne({
             _id: req.params.id
         });
-        // console.log(noteToShare);
+
+
+
         if (!noteToShare) {
             throw new Error('Note not found or you do not have permission to share it');
         }
 
-        // Ensure the note is not already shared with the user
+
         if (noteToShare.sharedWith.includes(sharedWithUserId)) {
             throw new Error('Note is already shared with this user');
         }
 
-        // Share the note with the user
+
         noteToShare.sharedWith.push(sharedWithUserId);
         await noteToShare.save();
 

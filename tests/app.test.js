@@ -4,7 +4,9 @@ const app = require("../app");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const Note = require("../models/Note");
+require("dotenv").config();
 
+//Functions to hash password and add user to database for testing
 const createUser = async () => {
     const curPassword = "hahahaha";
     const salt = await bcrypt.genSalt(10);
@@ -31,19 +33,18 @@ const createUser2 = async () => {
     return savedUser;
 }
 
-require("dotenv").config();
-
+//Clearing database before test and closing connection after each test
 beforeEach(async () => {
     await mongoose.connect(process.env.MONGO_URI);
     await User.deleteMany();
     await Note.deleteMany();
 });
 
-/* Closing database connection after each test. */
 afterEach(async () => {
     await mongoose.connection.close();
 });
 
+//Signup Test
 describe('POST /api/auth/signup', () => {
     it('should sign up a new user', async () => {
         const newUser = {
@@ -57,6 +58,7 @@ describe('POST /api/auth/signup', () => {
 
 });
 
+//Login Test
 describe('POST /api/auth/login', () => {
     it('should sign up a new user', async () => {
         await createUser();
@@ -71,7 +73,7 @@ describe('POST /api/auth/login', () => {
 
 });
 
-
+//Post a note test
 describe('POST /api/notes', () => {
     it('should create a new note for an authenticated user', async () => {
         await createUser();
@@ -97,6 +99,7 @@ describe('POST /api/notes', () => {
     });
 });
 
+//Get all notes test
 describe('GET /api/notes', () => {
     it('should get a list of all notes for an authenticated user', async () => {
         const user = await createUser();
@@ -124,6 +127,7 @@ describe('GET /api/notes', () => {
     });
 });
 
+//Get note by ID test
 describe('GET /api/notes/:id', () => {
     it('should get a specific note by ID for an authenticated user', async () => {
         const user = await createUser();
@@ -162,10 +166,11 @@ describe('GET /api/notes/:id', () => {
         await request(app)
             .get(`/api/notes/${nonExistingNoteId}`)
             .set('Authorization', `Bearer ${token}`)
-            .expect(500);
+            .expect(404);
     });
 });
 
+//Update a note test
 describe('PUT /api/notes/:id', () => {
     it('should update an existing note by ID for an authenticated user', async () => {
         const user = await createUser();
@@ -215,6 +220,7 @@ describe('PUT /api/notes/:id', () => {
     });
 });
 
+//Delete a note test
 describe('DELETE /api/notes/:id', () => {
     it('should delete an existing note by ID for an authenticated user', async () => {
         const user = await createUser();
@@ -234,7 +240,6 @@ describe('DELETE /api/notes/:id', () => {
             .set('Authorization', `Bearer ${token}`)
             .expect(200);
 
-        // Verify that the note has been deleted
         const deletedNote = await Note.findById(existingNote._id);
         expect(deletedNote).toBeNull();
     });
@@ -258,12 +263,13 @@ describe('DELETE /api/notes/:id', () => {
     });
 });
 
+
+//Share a note test
 describe('POST /api/notes/:id/share', () => {
     it('should share a note with another user for an authenticated user', async () => {
         const user1 = await createUser();
         const user2 = await createUser2();
-        // console.log(user1);
-        // console.log(user2);
+
         const tokenUser1 = await request(app)
             .post('/api/auth/login')
             .send({
@@ -271,7 +277,6 @@ describe('POST /api/notes/:id/share', () => {
                 password: 'hahahaha',
             })
             .then((res) => res.body.token);
-        // console.log(tokenUser1);
         const newNote = new Note({ title: 'Shared Note', content: 'This note will be shared.', owner: user1._id });
         const note = await newNote.save();
         // console.log(note._id);
@@ -280,8 +285,7 @@ describe('POST /api/notes/:id/share', () => {
             .set('Authorization', `Bearer ${tokenUser1}`)
             .send({ sharedWithUserId: user2._id })
             .expect(200);
-        // console.log(res.body);
-        // Verify that the note is now shared with user2
+
         expect(res.body.sharedWith).toContainEqual(user2._id.toString());
     });
 
@@ -328,6 +332,7 @@ describe('POST /api/notes/:id/share', () => {
     });
 });
 
+//Search endpoint test
 describe('Search Endpoint', () => {
     describe('GET /api/search', () => {
         it('should search for notes based on keywords for an authenticated user', async () => {
@@ -341,7 +346,7 @@ describe('Search Endpoint', () => {
                 })
                 .then((res) => res.body.token);
 
-            // Create a test note
+
             const newNote = {
                 title: 'Test Note',
                 content: 'This is a test note for searching.',
@@ -356,7 +361,6 @@ describe('Search Endpoint', () => {
                 .set('Authorization', `Bearer ${token}`)
                 .expect(200);
 
-            // Adjust the expectations based on your actual response structure
             expect(res.body.length).toBeGreaterThan(0);
             expect(res.body[0].title).toBe('Test Note');
         });
